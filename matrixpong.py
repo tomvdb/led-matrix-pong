@@ -46,11 +46,23 @@ clock_font = [
 
 mask = bytearray([1,2,4,8,16,32,64,128])
 
+def drawField():
+	for i in range(0,42):
+		drawPixel(i, 0, 150,150,150)
+		drawPixel(i, 23, 150,150,150)
+
+	for i in range(0,24,2):
+		drawPixel(21, i, 150, 150, 150)
+
 def drawNumber(number,offsetx,offsety,r,g,b):
     	for x in range(0,3):
         	for y in range(0,5):
             		if clock_font[3*number + x]&mask[y]:
                 		drawPixel(offsetx+x,offsety+y,r,g,b)
+
+def drawScore(p1, p2):
+	drawNumber( p1, 17, 2, 150, 150, 150)
+	drawNumber( p2, 23, 2, 150, 150, 150)
 
 def clearDisplay( pr, pg, pb ):
 #	for cnum in range(0, numpixels, 3):
@@ -89,18 +101,28 @@ numberCount = 0
 
 clearDisplay( 0, 150, 0 )
 
+paddle1Y = 11
+paddle2Y = 11
 
-paddleY = 11
+player1Score = 0
+player2Score = 0
+
+ballX = 24
+ballY = 12
 
 while done == False:
 	try:
 		for event in device.read():
 			if event.type == evdev.ecodes.EV_KEY:
 #				print event.code
-				if event.code == 105 and paddleY > 2:
-					paddleY = paddleY - 1
-				if event.code == 106 and paddleY < 20:
-					paddleY = paddleY + 1
+				if event.code == 105 and paddle2Y > 3:
+					paddle2Y = paddle2Y - 1
+				if event.code == 106 and paddle2Y < 20:
+					paddle2Y = paddle2Y + 1
+				if event.code == 45 and paddle1Y > 3:
+					paddle1Y = paddle1Y - 1
+				if event.code == 44 and paddle1Y < 20:
+					paddle1Y = paddle1Y + 1
 
 
 	except IOError:
@@ -121,16 +143,44 @@ while done == False:
 
 #	drawNumber(numberCount, 10, 10, 150, 0, 0 )
 
-	drawPixel( 1, paddleY-1, 150, 150, 150 )
-	drawPixel( 1, paddleY-2, 150, 150, 150 )
-	drawPixel( 1, paddleY+1, 150, 150, 150 )
-	drawPixel( 1, paddleY+2, 150, 150, 150 )
-	drawPixel( 1, paddleY, 150, 150, 150 )
+	drawPixel( 1, paddle1Y-1, 150, 150, 150 )
+	drawPixel( 1, paddle1Y-2, 150, 150, 150 )
+	drawPixel( 1, paddle1Y+1, 150, 150, 150 )
+	drawPixel( 1, paddle1Y+2, 150, 150, 150 )
+	drawPixel( 1, paddle1Y, 150, 150, 150 )
+
+	drawPixel( 40, paddle2Y-1, 150, 150, 150 )
+	drawPixel( 40, paddle2Y-2, 150, 150, 150 )
+	drawPixel( 40, paddle2Y+1, 150, 150, 150 )
+	drawPixel( 40, paddle2Y+2, 150, 150, 150 )
+	drawPixel( 40, paddle2Y, 150, 150, 150 )
+
+
+	drawField()
+	drawScore( player2Score, player1Score )
+
 
 	drawPixel( ballX, ballY, 0, 150, 150 )
 
-	if ballX == 2 and ballY >= paddleY - 2 and ballY <= paddleY + 2:
+	
+
+
+	if ballX == 2 and ballY >= paddle1Y - 2 and ballY <= paddle1Y + 2:
 		ballXDir = 1
+
+	if ballX == 39 and ballY >= paddle2Y - 2 and ballY <= paddle2Y + 2:
+		ballXDir = -1
+
+	if ballX == 0:
+		ballX = 24
+		ballY = 12
+		player1Score = player1Score + 1
+
+	if ballX == 41:
+		ballX = 24
+		ballY = 12
+		player2Score = player2Score + 1
+		
 
 	updateCounter = updateCounter + 1;
 	
@@ -160,7 +210,7 @@ while done == False:
 #			numberCount = numberCount + 1
 			ballXDir = 1
 
-		if ballY > 22:
+		if ballY > 21:
 #			numberCount = numberCount + 1
 			ballYDir = -1
 
