@@ -46,6 +46,45 @@ clock_font = [
 
 mask = bytearray([1,2,4,8,16,32,64,128])
 
+wheel = 0
+
+lastr = 0
+lastg = 0
+lastb = 150
+
+
+def rainbowCycle(wheelPos):
+	global lastr
+	global lastg
+	global lastb
+
+	wheelPos = 255 - wheelPos;
+
+	if wheelPos < 85:
+		lastr = 255 - wheelPos * 3
+		lastg = 0
+		lastb = wheelPos * 3
+		clearDisplay( 255 - wheelPos * 3, 0, wheelPos * 3 )
+		return
+
+	if wheelPos < 170:
+		
+		wheelPos = wheelPos - 85
+		lastr = 0
+		lastg = wheelPos * 3
+		lastb = 255 - wheelPos * 3
+		clearDisplay( 0, wheelPos * 3, 255 - wheelPos * 3)
+		return
+
+	wheelPos = wheelPos - 170
+	
+	lastr = wheelPos * 3
+	lastg = 255 - wheelPos * 3
+	lastb = 0
+	clearDisplay( wheelPos * 3, 255 - wheelPos * 3, 0)
+
+
+
 def drawField():
 	for i in range(0,42):
 		drawPixel(i, 0, 150,150,150)
@@ -65,15 +104,9 @@ def drawScore(p1, p2):
 	drawNumber( p2, 23, 2, 150, 150, 150)
 
 def clearDisplay( pr, pg, pb ):
-#	for cnum in range(0, numpixels, 3):
-#        	matrix[cnum] = pr
-#	        matrix[cnum+1] = pg
-#        	matrix[cnum+2] = pb
-
 	for x in range(0,42):
 		for y in range(0,24):
 			drawPixel(x,y, pr, pg, pb )
-#	print matrix	
 	
 
 def drawPixel( px, py, pr, pg, pb ):
@@ -110,116 +143,177 @@ player2Score = 0
 ballX = 24
 ballY = 12
 
+gameState = 0
+
+winOn = 3
+
+# 0 = not playing
+# 1 = countdown
+# 2 = playing
+# 3 = goal
+
+countdown = 3
+
 while done == False:
 	try:
 		for event in device.read():
 			if event.type == evdev.ecodes.EV_KEY:
-#				print event.code
-				if event.code == 105 and paddle2Y > 3:
-					paddle2Y = paddle2Y - 1
-				if event.code == 106 and paddle2Y < 20:
-					paddle2Y = paddle2Y + 1
-				if event.code == 45 and paddle1Y > 3:
-					paddle1Y = paddle1Y - 1
-				if event.code == 44 and paddle1Y < 20:
-					paddle1Y = paddle1Y + 1
+				print event.code
+
+				if gameState == 2:
+					if event.code == 48 and paddle2Y > 3:
+						paddle2Y = paddle2Y - 1
+					if event.code == 30 and paddle2Y < 20:
+						paddle2Y = paddle2Y + 1
+					if event.code == 35 and paddle1Y > 3:
+						paddle1Y = paddle1Y - 1
+					if event.code == 33 and paddle1Y < 20:
+						paddle1Y = paddle1Y + 1
+
+				if gameState == 0:
+					if event.code == 18 or event.code == 23:
+						gameState = 1
+						ballX = 24
+						ballY = 12
+						playerScore1 = 0
+						playerScore2 = 0
+						updateCounter = 0
+						countdown = 3
 
 
 	except IOError:
 		a = 1
 
-#	for event in pygame.event.get():
-#		if event.type == pygame.QUIT:
-#			done = True
-#		if event.type == pygame.KEYDOWN:
-#			print "key pressed"
-#			if event.key == pygame.K_UP:
-#				numberCount = numberCount + 1
-#			if event.key == pygame.K_DOWN:
-#				numberCount = numberCount - 1
-					
+	clearDisplay(lastr, lastg, lastb)
 
-	clearDisplay(0, 0, 150)
+	if gameState == 0:
+		wheel = wheel + 1
 
-#	drawNumber(numberCount, 10, 10, 150, 0, 0 )
+		if wheel > 254:
+			wheel = 1
 
-	drawPixel( 1, paddle1Y-1, 150, 150, 150 )
-	drawPixel( 1, paddle1Y-2, 150, 150, 150 )
-	drawPixel( 1, paddle1Y+1, 150, 150, 150 )
-	drawPixel( 1, paddle1Y+2, 150, 150, 150 )
-	drawPixel( 1, paddle1Y, 150, 150, 150 )
-
-	drawPixel( 40, paddle2Y-1, 150, 150, 150 )
-	drawPixel( 40, paddle2Y-2, 150, 150, 150 )
-	drawPixel( 40, paddle2Y+1, 150, 150, 150 )
-	drawPixel( 40, paddle2Y+2, 150, 150, 150 )
-	drawPixel( 40, paddle2Y, 150, 150, 150 )
+		rainbowCycle(wheel)
 
 
-	drawField()
-	drawScore( player2Score, player1Score )
+	if gameState == 1:
+		if countdown == 0:
+			gameState = 2
+			updateCounter = 0
+		else:		
+
+			drawNumber(countdown, 5, 5, 0, 150, 0)
+
+			updateCounter = updateCounter + 1
+
+			if updateCounter > 20:
+				updateCounter = 0
+				countdown = countdown - 1	
+	
+
+	if gameState == 2:
+		drawPixel( 1, paddle1Y-1, 150, 150, 150 )
+		drawPixel( 1, paddle1Y-2, 150, 150, 150 )
+		drawPixel( 1, paddle1Y+1, 150, 150, 150 )
+		drawPixel( 1, paddle1Y+2, 150, 150, 150 )
+		drawPixel( 1, paddle1Y, 150, 150, 150 )
+
+		drawPixel( 40, paddle2Y-1, 150, 150, 150 )
+		drawPixel( 40, paddle2Y-2, 150, 150, 150 )
+		drawPixel( 40, paddle2Y+1, 150, 150, 150 )
+		drawPixel( 40, paddle2Y+2, 150, 150, 150 )
+		drawPixel( 40, paddle2Y, 150, 150, 150 )
 
 
-	drawPixel( ballX, ballY, 0, 150, 150 )
+		drawField()
+		drawScore( player2Score, player1Score )
+
+
+		drawPixel( ballX, ballY, 0, 150, 150 )
 
 	
 
 
-	if ballX == 2 and ballY >= paddle1Y - 2 and ballY <= paddle1Y + 2:
-		ballXDir = 1
-
-	if ballX == 39 and ballY >= paddle2Y - 2 and ballY <= paddle2Y + 2:
-		ballXDir = -1
-
-	if ballX == 0:
-		ballX = 24
-		ballY = 12
-		player1Score = player1Score + 1
-
-	if ballX == 41:
-		ballX = 24
-		ballY = 12
-		player2Score = player2Score + 1
-		
-
-	updateCounter = updateCounter + 1;
-	
-	if updateCounter > 5:
-
-#	        ltime =  time.localtime()
-#	        hour = ltime.tm_hour
-#	        minute= ltime.tm_min
-#	        second= ltime.tm_sec
-
-#	        drawNumber(int(hour/10),2,1,0,150,0)
-#	        drawNumber(int(hour%10),6,1,0,150,0)
-#	        drawNumber(int(minute/10),2,8,0,150,0)
-#	        drawNumber(int(minute%10),6,8,0,150,0)
-#	        drawNumber(int(second/10),2,15,0,150,0)
-#	        drawNumber(int(second%10),6,15,0,150,0)		
-
-		updateCounter = 0
-		ballX = ballX + ballXDir
-		ballY = ballY + ballYDir
-
-		if ballX > 40:
-#			numberCount = numberCount + 1
-			ballXDir = -1
-
-		if ballX < 2:
-#			numberCount = numberCount + 1
+		if ballX == 2 and ballY >= paddle1Y - 2 and ballY <= paddle1Y + 2:
 			ballXDir = 1
 
-		if ballY > 21:
-#			numberCount = numberCount + 1
-			ballYDir = -1
+		if ballX == 39 and ballY >= paddle2Y - 2 and ballY <= paddle2Y + 2:
+			ballXDir = -1
 
-		if ballY < 2:
-#			numberCount = numberCount + 1
-			ballYDir = 1
+		if ballX == 1:
+			ballX = 24
+			ballY = 12
+			player1Score = player1Score + 1
+			gameState = 3
+			countdown = 3
+			continue
+
+		if ballX == 41:
+			ballX = 24
+			ballY = 12
+			player2Score = player2Score + 1
+			gameState = 3
+			countdown = 3
+			continue
+		
+
+		updateCounter = updateCounter + 1;
+	
+		if updateCounter > 5:
+
+			updateCounter = 0
+			ballX = ballX + ballXDir
+			ballY = ballY + ballYDir
+
+			if ballX > 40:
+				ballXDir = -1
+
+			if ballX < 2:
+				ballXDir = 1
+
+			if ballY > 21:
+				ballYDir = -1
+
+			if ballY < 2:
+				ballYDir = 1
 
 
-#		print "(" + str(ballX) + "," + str(ballY) + ")" + str(ballXDir) + "," + str(ballYDir)
+        if gameState == 3:
+
+		if player1Score > 2 or player2Score > 2:
+			gameState = 4
+
+                if countdown == 0:
+                        gameState = 2
+                        updateCounter = 0
+                else:
+
+                        drawNumber(countdown, 5, 5, 0, 150, 0)
+
+                        updateCounter = updateCounter + 1
+
+                        if updateCounter > 20:
+                                updateCounter = 0
+                                countdown = countdown - 1
+
+	if gameState == 4:
+
+                if countdown == 0:
+                        gameState = 0
+                        updateCounter = 0
+			player1Score = 0
+			player2Score = 0
+                else:
+
+                        #drawNumber(countdown, 5, 5, 0, 150, 0)
+			drawScore(player2Score, player1Score)
+
+                        updateCounter = updateCounter + 1
+
+                        if updateCounter > 20:
+                                updateCounter = 0
+                                countdown = countdown - 1
+		
+
 
 	updateDisplay()
 
