@@ -2,6 +2,7 @@ import serial
 import pygame
 import time
 import evdev
+from select import select
 
 numpixels = 42 * 24
 
@@ -14,17 +15,23 @@ pygame.init()
 
 clock = pygame.time.Clock()
 
-device = evdev.InputDevice('/dev/input/event0')
-print device
+#device = evdev.InputDevice('/dev/input/event0')
+#device2 = evdev.InputDevice('/dev/input/event1')
+#print device
 
 
+devices = map(evdev.InputDevice, ('/dev/input/event0', '/dev/input/event1'))
+devices = {dev.fd: dev for dev in devices}
+
+for dev in devices.values():
+        print(dev)
 
 matrix = list()
 
 for num in range(0, numpixels):
 	matrix.append(0)
-        matrix.append(0)
-        matrix.append(0)
+	matrix.append(0)
+	matrix.append(0)
 
 
 ballX = 0
@@ -154,36 +161,88 @@ winOn = 3
 
 countdown = 3
 
+
+
 while done == False:
 	try:
-		for event in device.read():
-			if event.type == evdev.ecodes.EV_KEY:
-				print event.code
 
-				if gameState == 2:
-					if event.code == 48 and paddle2Y > 3:
-						paddle2Y = paddle2Y - 1
-					if event.code == 30 and paddle2Y < 20:
-						paddle2Y = paddle2Y + 1
-					if event.code == 35 and paddle1Y > 3:
-						paddle1Y = paddle1Y - 1
-					if event.code == 33 and paddle1Y < 20:
-						paddle1Y = paddle1Y + 1
+		r, w, x = select(devices, [], [], 0)
+		for fd in r:
+			for event in devices[fd].read():		
 
-				if gameState == 0:
-					if event.code == 18 or event.code == 23:
-						gameState = 1
-						ballX = 24
-						ballY = 12
-						playerScore1 = 0
-						playerScore2 = 0
-						updateCounter = 0
-						countdown = 3
+				print r
+				print w
+				print x
+				print (fd)
+				print (event)
+
+				if event.code == 16 and fd == 4:
+
+					print ( "event.code=16")
+					print (event.value)
+					print (gameState)
+
+					if gameState == 2:
+						if event.value == 1 and paddle1Y > 3:
+							paddle1Y = paddle1Y - 1
+							print ("left")
+						if event.value == -1 and paddle1Y < 20:
+							paddle1Y = paddle1Y + 1
+							print ("right")
+
+
+				if event.type == evdev.ecodes.EV_KEY and fd ==4:
+
+					if gameState == 0:
+						if event.code == 304:
+							gameState = 1
+							ballX = 24
+							ballY = 12
+							playerScore1 = 0
+							playerScore2 = 0
+							updateCounter = 0
+							countdown = 3	
+							paddle1Y = 11
+							paddle2Y = 11
+
+							
+							
+				if event.code == 16 and fd == 6:
+
+					print ("event.code=16")
+					print ( event.value)
+
+
+					if gameState == 2:
+						if event.value == 1 and paddle2Y > 3:
+							paddle2Y = paddle2Y - 1
+						if event.value == -1 and paddle2Y < 20:
+							paddle2Y = paddle2Y + 1
+	#                                        if event.code == 35 and paddle1Y > 3:
+	 #                                               paddle1Y = paddle1Y - 1
+	  #                                      if event.code == 33 and paddle1Y < 20:
+	   #                                             paddle1Y = paddle1Y + 1
+
+			
+				if event.type == evdev.ecodes.EV_KEY and fd == 6:
+
+					if gameState == 0:
+						if event.code == 304:
+							gameState = 1
+							ballX = 24
+							ballY = 12
+							playerScore1 = 0
+							playerScore2 = 0
+							updateCounter = 0
+							countdown = 3
+							paddle1Y = 11
+							paddle2Y = 11
+							
 
 
 	except IOError:
 		a = 1
-
+		
 	clearDisplay(lastr, lastg, lastb)
 
 	if gameState == 0:
@@ -276,48 +335,35 @@ while done == False:
 			if ballY < 2:
 				ballYDir = 1
 
-
-        if gameState == 3:
+	if gameState == 3:
 
 		if player1Score > 2 or player2Score > 2:
 			gameState = 4
-
-                if countdown == 0:
-                        gameState = 2
-                        updateCounter = 0
-                else:
-
-                        drawNumber(countdown, 5, 5, 0, 150, 0)
-
-                        updateCounter = updateCounter + 1
-
-                        if updateCounter > 20:
-                                updateCounter = 0
-                                countdown = countdown - 1
+		if countdown == 0:
+			gameState = 2
+			updateCounter = 0
+		else:
+			drawNumber(countdown, 5, 5, 0, 150, 0)
+			updateCounter = updateCounter + 1
+			if updateCounter > 20:
+				updateCounter = 0
+				countdown = countdown - 1
 
 	if gameState == 4:
 
-                if countdown == 0:
-                        gameState = 0
-                        updateCounter = 0
+		if countdown == 0:
+			gameState = 0
+			updateCounter = 0
 			player1Score = 0
 			player2Score = 0
-                else:
-
-                        #drawNumber(countdown, 5, 5, 0, 150, 0)
+		else:
 			drawScore(player2Score, player1Score)
-
-                        updateCounter = updateCounter + 1
-
-                        if updateCounter > 20:
-                                updateCounter = 0
-                                countdown = countdown - 1
-		
-
-
+			updateCounter = updateCounter + 1
+			if updateCounter > 20:
+				updateCounter = 0
+				countdown = countdown - 1
 	updateDisplay()
-
 	clock.tick(30)
-
+	
 pygame.quit()
 ser.close()
